@@ -3,28 +3,18 @@ import os
 from Categories import Categories
 from events import events
 
-# set hadoop binary
-hadoop_bin = "C:\\Development\\hadoop-2.7.3"
-# set python exec for win
-python_executable_path = 'C:\\Development\\python_conda\\envs\\big_data\\python.exe'
-# set environment vars
-os.environ['HADOOP_HOME'] = hadoop_bin
-os.environ['PYSPARK_PYTHON'] = python_executable_path
-os.environ['PYSPARK_DRIVER_PYTHON'] = python_executable_path
-
-data_path = "C:\\Users\\Vitaliy Fischuk\\PycharmProjects\\MBD-Project\\sample_data\\amazon_reviews"
+data_path = "/user/s2773430/data"
 output_directory = "C:\\Users\\Vitaliy Fischuk\\PycharmProjects\\MBD-Project\\sample_data\\result"
 category_names = Categories.get_categories()
-file_format = ".json"
-tags = ["meta", "reviews"]
+file_format = "json.gz"
 
 # create a spark session (local for testing locally). to run in the dfs, remove master call.
-spark = SparkSession.builder.appName("amazon_reviews").master("local[*]").getOrCreate()
+spark = SparkSession.builder.appName("amazon_reviews").getOrCreate()
 
 results_per_event = {event.name: [] for event in events}
 # load separately
 for category in category_names:
-    path_review = os.path.join(data_path, f"reviews_{category}.json")
+    path_review = os.path.join(data_path, f"reviews_{category}.{file_format}")
     df_review = spark.read.json(path_review)
     df_review.createOrReplaceTempView("reviews")
     for event in events:
