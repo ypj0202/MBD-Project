@@ -13,7 +13,7 @@ os.environ['HADOOP_HOME'] = hadoop_bin
 os.environ['PYSPARK_PYTHON'] = python_executable_path
 os.environ['PYSPARK_DRIVER_PYTHON'] = python_executable_path
 
-data_path = "C:\\Users\\Vitaliy Fischuk\\PycharmProjects\\MBD-Project\\sample_data\\amazon_reviews"
+data_path = "/sample_data/amazon_reviews"
 output_directory = "C:\\Users\\Vitaliy Fischuk\\PycharmProjects\\MBD-Project\\sample_data\\result"
 category_names = Categories.get_categories()
 file_format = ".json"

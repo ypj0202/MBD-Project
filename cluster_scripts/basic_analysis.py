@@ -1,3 +1,4 @@
+from pyspark.sql.functions import lit
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, BooleanType, LongType
 import os
@@ -100,6 +101,7 @@ results_per_event = {event.name: [] for event in events}
 for category in category_names:
     path_review = os.path.join(data_path, f"reviews_{category}.{file_format}")
     df_review = spark.read.schema(schema).json(path_review)
+    df_review = df_review.withColumn("category", lit(category))
     df_review.createOrReplaceTempView("reviews")
     for event in events:
         start = event.get_scrapping_start_date_unix()
@@ -109,18 +111,22 @@ for category in category_names:
         SELECT
             'Span Before' AS time_span,
             COUNT(*) as review_count,
-            AVG(overall) as average_rating
+            AVG(overall) as average_rating,
+            category
         FROM
             reviews
         WHERE unixReviewTime BETWEEN {start} AND {date}
+        GROUP BY category, 'Span Before'
         UNION
         SELECT
             'Span After' AS time_span,
             COUNT(*) as review_count,
-            AVG(overall) as average_rating
+            AVG(overall) as average_rating,
+            category
         FROM
             reviews
         WHERE unixReviewTime BETWEEN {date} AND {end}
+        GROUP BY category, 'Span After'
         """
         result = spark.sql(query)
         results_per_event[event.name].append(result)
@@ -129,7 +135,7 @@ for category in category_names:
 # save results to files
 for event_name, dfs in results_per_event.items():
     combined_df = dfs[0]
-    output_path = os.path.join(output_directory, f"{event_name}.csv")
+    output_path = os.path.join(output_directory, f"{event_name}")
     for df in dfs[1:]:
         combined_df = combined_df.union(df)
     combined_df.coalesce(1).write.csv(output_path, mode='overwrite', header=True)

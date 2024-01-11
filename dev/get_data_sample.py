@@ -1,6 +1,6 @@
 from Categories import Categories
 
-output_path = "sample_data/amazon_reviews"
+output_path = "../sample_data/amazon_reviews"
 input_path = "/user/s2773430/data/Amazon_2018"
 category_names = Categories.get_categories()
 
