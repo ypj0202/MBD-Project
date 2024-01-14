@@ -1,6 +1,6 @@
-from pyspark.sql.functions import lit
+from pyspark.sql.functions import lit, explode, collect_list, struct, col
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType, BooleanType, LongType
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType, BooleanType, LongType, ArrayType
 import os
 from datetime import datetime
 import time
@@ -73,14 +73,15 @@ class Categories:
 
 
 data_path = "/user/s2773430/data/Amazon_2018"
-output_directory = "hdfs://spark-nn.eemcs.utwente.nl/user/s2426668/amazon_reviews_project/basic_analysis"
+# output_directory = "hdfs://spark-nn.eemcs.utwente.nl/user/s2426668/amazon_reviews_project/basic_analysis"
+output_directory = "hdfs://spark-nn.eemcs.utwente.nl/user/s2773430/amazon_reviews_project/basic_analysis"
 category_names = Categories.get_categories()
 file_format = "json.gz"
 
 # create a spark session (local for testing locally). to run in the dfs, remove master call.
 spark = SparkSession.builder.appName("amazon_reviews").getOrCreate()
 # define a schema
-schema = StructType([
+review_schema = StructType([
     StructField("overall", DoubleType(), True),
     StructField("verified", BooleanType(), True),
     StructField("reviewTime", StringType(), True),
@@ -95,14 +96,59 @@ schema = StructType([
     StructField("summary", StringType(), True),
     StructField("unixReviewTime", LongType(), True)
 ])
-
+meta_schema = StructType([
+    StructField("category", ArrayType(StringType()), True),
+    StructField("tech1", StringType(), True),
+    StructField("description", ArrayType(StringType()), True),
+    StructField("fit", StringType(), True),
+    StructField("title", StringType(), True),
+    StructField("also_buy", ArrayType(StringType()), True),
+    StructField("tech2", StringType(), True),
+    StructField("brand", StringType(), True),
+    StructField("feature", ArrayType(StringType()), True),
+    StructField("rank", ArrayType(StringType()), True),
+    StructField("also_view", ArrayType(StringType()), True),
+    StructField("main_cat", StringType(), True),
+    StructField("similar_item", StringType(), True),
+    StructField("date", StringType(), True),
+    StructField("price", StringType(), True),
+    StructField("asin", StringType(), True),
+    StructField("imageURL", ArrayType(StringType()), True),
+    StructField("imageURLHighRes", ArrayType(StringType()), True)
+])
 results_per_event = {event.name: [] for event in events}
 # load separately
 for category in category_names:
     path_review = os.path.join(data_path, f"reviews_{category}.{file_format}")
-    df_review = spark.read.schema(schema).json(path_review)
-    df_review = df_review.withColumn("category", lit(category))
-    df_review.createOrReplaceTempView("reviews")
+    path_meta = os.path.join(data_path, f"meta_{category}.{file_format}")
+    df_review = spark.read.schema(review_schema).json(path_review)
+    df_review = df_review.withColumn("ds_category", lit(category)) # Dataset category
+    df_meta = spark.read.schema(meta_schema).json(path_meta)
+    df_meta = df_meta.dropDuplicates(["asin"])
+    df_joined = df_review.join(df_meta, on="asin", how="inner") # This will duplicate the size of the data
+    #df_review.createOrReplaceTempView("reviews")
+    df_joined.createOrReplaceTempView("reviews")
+    ### Join the review with the meta data, optimized approach
+    # # Create a struct of all columns in the review DataFrame except 'asin'
+    # review_struct = struct([col(f.name) for f in review_schema.fields if f.name != 'asin'])
+
+    # # Aggregate Reviews by 'asin' into a list of structs
+    # aggregated_reviews = df_review.groupBy("asin").agg(collect_list(review_struct).alias("reviews"))
+    # # Join Aggregated Reviews with Meta Data
+    # joined_df = df_meta.join(aggregated_reviews, "asin", "inner") # Use inner to drop products without reviews, left to keep them
+    # # Obtain reviews from product meta
+    # review_in_joined = joined_df.select(explode("reviews").alias("review")).select("review.overall", "review.verified",  "review.reviewTime", "review.reviewerID", "review.style.Size", "review.style.style name",  "review.reviewerName", "review.reviewText", "review.summary", "review.unixReviewTime")
+    
+    # Statistics per category
+    print(f"<-----------Statistics for category {category}-------------->")
+    print(f"Review count:{str(df_review.count())}")
+    # print(f"Joined review count:{str(review_in_joined.count())}") # For optimized approach
+    print(f"Joined review count:{str(df_joined.count())}")
+    print(f"Unique product in meta:{str(df_meta.count())}")
+    # print(f"Joined product count:{str(joined_df.count())}") # For optimized approach
+    print(f"Joined product count:{str(df_joined.groupBy('asin').count().count())}")
+    print(f"Unique product in review:{str(df_review.groupBy('asin').count().count())}")
+    ### End of statistics
     for event in events:
         start = event.get_scrapping_start_date_unix()
         date = event.get_event_date_unix()
@@ -112,21 +158,21 @@ for category in category_names:
             'Span Before' AS time_span,
             COUNT(*) as review_count,
             AVG(overall) as average_rating,
-            category
+            ds_category
         FROM
             reviews
         WHERE unixReviewTime BETWEEN {start} AND {date}
-        GROUP BY category, 'Span Before'
+        GROUP BY ds_category, 'Span Before'
         UNION
         SELECT
             'Span After' AS time_span,
             COUNT(*) as review_count,
             AVG(overall) as average_rating,
-            category
+            ds_category
         FROM
             reviews
         WHERE unixReviewTime BETWEEN {date} AND {end}
-        GROUP BY category, 'Span After'
+        GROUP BY ds_category, 'Span After'
         """
         result = spark.sql(query)
         results_per_event[event.name].append(result)
