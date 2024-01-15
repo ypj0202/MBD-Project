@@ -14,7 +14,7 @@ plot_df = pd.DataFrame({
     "avg_score": avg_score_per_day
     }).reset_index()
 
-# Plotting
+# Plotting (CHATGPT HELP)
 fig, axs = plt.subplots(2, figsize=(25, 8))
 
 # Total Reviews per Day
@@ -30,5 +30,6 @@ axs[1].set_xlabel('Date')
 axs[1].set_ylabel('Average Score')
 
 plt.tight_layout()
-plt.show()
 plt.savefig('figures/total_review_plots.png')
+plt.show()
+
