@@ -46,7 +46,7 @@ class Categories:
 
 
 data_path = "/user/s2773430/data/Amazon_2018"
-output_directory = "hdfs://spark-nn.eemcs.utwente.nl/user/s2426668/amazon_reviews_project/basic_analysis/time_anal"
+output_directory = "hdfs://spark-nn.eemcs.utwente.nl/user/s2426668/amazon_reviews_project/time_anal"
 category_names = Categories.get_categories()
 file_format = "json.gz"
 
