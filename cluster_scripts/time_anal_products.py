@@ -137,6 +137,6 @@ result = result.join(top_products_in_json, ["reviewDate", "category"], "left")
 result = result.orderBy("reviewDate", "category")
 
 # save results to a file
-result.coalesce(1).write.csv(output_directory, mode='overwrite', header=True)
+result.write.json(output_directory, mode='overwrite')
 
 print("SUCCESS")
