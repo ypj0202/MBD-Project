@@ -55,6 +55,7 @@ file_format = "json.gz"
 
 # create a spark session (local for testing locally). to run in the dfs, remove master call.
 spark = SparkSession.builder.appName("amazon_reviews").getOrCreate()
+
 # define a schema
 review_schema = StructType([
     StructField("overall", DoubleType(), True),
@@ -118,21 +119,18 @@ df_reviews = df_reviews.withColumn("reviewDate", to_date(from_unixtime("unixRevi
 
 # get total number of reviews per product per category per day (e.g. form combinations of date-category-product)
 result = df_reviews.groupBy("reviewDate", "category", "asin").agg(count("*").alias("num_of_reviews"))
-# we need to include the title as well, but not group by it.
-asin_title_df = df_reviews.select("asin", "title")
-# add titles
-result = result.join(asin_title_df, on="asin", how="inner")
+
 result_no_products = df_reviews.groupBy("reviewDate", "category").agg(count("*").alias("num_of_reviews"))
 # use a window for each category-date combination, where the rows inside each window are ordered by number of reviews
 # this allows us to perform ranking later.
 window = Window.partitionBy("reviewDate", "category").orderBy(desc("num_of_reviews"))
 # apply the window and rank all the rows based on number of reviews.
 reviews_with_ranked_products = result.withColumn("rank", rank().over(window))
-num_of_top_products_to_display = 20
+num_of_top_products_to_display = 10
 # note: filter in pycharm gives a typing error, so i used where instead. both are interchangeable.
 reviews_with_top_products = reviews_with_ranked_products.where(col("rank") <= num_of_top_products_to_display)
 # convert to json
-json_struct = struct("asin", "title", "num_of_reviews")
+json_struct = struct("asin", "num_of_reviews")
 top_products_in_json = reviews_with_top_products.groupBy("reviewDate", "category").agg(collect_list(json_struct)
                                                                                        .alias("top_products_json"))
 # join with the original data
@@ -142,5 +140,4 @@ result = result.orderBy("reviewDate", "category")
 
 # save results to a file
 result.write.json(output_directory, mode='overwrite')
-
 print("SUCCESS")
