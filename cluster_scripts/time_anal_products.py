@@ -101,6 +101,7 @@ for category in category_names:
     # loading meta
     df_meta = spark.read.schema(meta_schema).json(path_meta)
     df_meta = df_meta.dropDuplicates(["asin"])
+    df_meta = df_meta.drop("category")
     # loading reviews
     df_review = spark.read.schema(review_schema).json(path_review)
     df_review = df_review.withColumn("category", lit(category))  # Dataset category
