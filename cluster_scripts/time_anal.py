@@ -68,14 +68,42 @@ review_schema = StructType([
     StructField("summary", StringType(), True),
     StructField("unixReviewTime", LongType(), True)
 ])
+meta_schema = StructType([
+    StructField("category", ArrayType(StringType()), True),
+    StructField("tech1", StringType(), True),
+    StructField("description", ArrayType(StringType()), True),
+    StructField("fit", StringType(), True),
+    StructField("title", StringType(), True),
+    StructField("also_buy", ArrayType(StringType()), True),
+    StructField("tech2", StringType(), True),
+    StructField("brand", StringType(), True),
+    StructField("feature", ArrayType(StringType()), True),
+    StructField("rank", ArrayType(StringType()), True),
+    StructField("also_view", ArrayType(StringType()), True),
+    StructField("main_cat", StringType(), True),
+    StructField("similar_item", StringType(), True),
+    StructField("date", StringType(), True),
+    StructField("price", StringType(), True),
+    StructField("asin", StringType(), True),
+    StructField("imageURL", ArrayType(StringType()), True),
+    StructField("imageURLHighRes", ArrayType(StringType()), True)
+])
 
 dfs = []
 # load separately and then union (to create a separate column, which holds category)
 for category in category_names:
+    # paths
     path_review = os.path.join(data_path, f"reviews_{category}.{file_format}")
+    path_meta = os.path.join(data_path, f"meta_{category}.{file_format}")
+    # loading meta
+    df_meta = spark.read.schema(meta_schema).json(path_meta)
+    df_meta = df_meta.dropDuplicates(["asin"])
+    df_meta = df_meta.drop("category")
+    # loading reviews
     df_review = spark.read.schema(review_schema).json(path_review)
     df_review = df_review.withColumn("category", lit(category))  # Dataset category
-    dfs.append(df_review)
+    df_joined = df_review.join(df_meta, on="asin", how="inner")
+    dfs.append(df_joined)
 
 # merge all the dataframes. (Cluster goes boom-boom)
 df_reviews = dfs[0]
@@ -91,9 +119,7 @@ result = df_reviews.groupBy("reviewDate", "category").agg(count("*").alias("num_
 # group by date and category
 result = result.orderBy("reviewDate", "category")
 
-result.show(1000)
-
 # save results to a file
-result.write.csv(output_directory, mode='overwrite', header=True)
+result.coalesce(1).write.csv(output_directory, mode='overwrite', header=True)
 
 print("SUCCESS")
