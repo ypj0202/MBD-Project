@@ -3,7 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, BooleanType, LongType, ArrayType
 from pyspark.sql.functions import from_unixtime, to_date, avg, count
 from pyspark.sql import Window
-from pyspark.sql.functions import rank, desc
+from pyspark.sql.functions import rank, desc, first
 
 import os
 from datetime import datetime
@@ -116,10 +116,12 @@ for df in dfs[1:]:
 
 # chipi, chipi, chapa, chapa, dubi, dubi, daba, daba
 df_reviews = df_reviews.withColumn("reviewDate", to_date(from_unixtime("unixReviewTime")))
-# get titles
-titles = df_reviews.select("asin", "title", "date")
+
 # get total number of reviews per product per category per day (e.g. form combinations of date-category-product)
-result = df_reviews.groupBy("reviewDate", "category", "asin").agg(count("*").alias("num_of_reviews"))
+result = df_reviews.groupBy("reviewDate", "category", "asin").agg(count("*").alias("num_of_reviews"),
+                                                                  first("title").alias("title"),
+                                                                  first("date").alias("date"))
+
 
 result_no_products = df_reviews.groupBy("reviewDate", "category").agg(count("*").alias("num_of_reviews"))
 # use a window for each category-date combination, where the rows inside each window are ordered by number of reviews
@@ -130,8 +132,7 @@ reviews_with_ranked_products = result.withColumn("rank", rank().over(window))
 num_of_top_products_to_display = 10
 # note: filter in pycharm gives a typing error, so i used where instead. both are interchangeable.
 reviews_with_top_products = reviews_with_ranked_products.where(col("rank") <= num_of_top_products_to_display)
-# add titles and dates:
-reviews_with_top_products = reviews_with_top_products.join(titles, on="asin", how="inner")
+
 # convert to json
 json_struct = struct("asin", "num_of_reviews", "title", "date")
 top_products_in_json = reviews_with_top_products.groupBy("reviewDate", "category").agg(collect_list(json_struct)
