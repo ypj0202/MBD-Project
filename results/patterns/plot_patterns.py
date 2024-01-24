@@ -6,6 +6,7 @@ data = pd.read_json("result.json", lines=True)
 output_dir_total = "total_results/"
 output_dir_cat_day = "category_weekday_results/"
 output_dir_cat_month = "category_month_results/"
+output_dir_dec = "category_dec_results/"
 
 categories = data["category"].unique() # 29
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -14,6 +15,8 @@ date_format = '%Y-%m-%d'
 
 # num of reviews to int
 data["num_of_reviews"] = data["num_of_reviews"].apply(int)
+data["reviewDate"] = data["reviewDate"].apply(lambda x: dt.strptime(x, date_format))
+data = data[(data["reviewDate"].dt.year >= 2010) & (data["reviewDate"].dt.year <= 2018)]
 
 # [row][col]
 # reviewDate, category, num_of_reviews, top_products_json -> asin, num_of_reviews, title, date (often empty)
@@ -22,7 +25,7 @@ data["num_of_reviews"] = data["num_of_reviews"].apply(int)
 def weekday_calc(data) :
     # change date to day of week
     data_days = data.copy()
-    data_days["reviewDate"] = data_days["reviewDate"].apply(lambda x: dt.strptime(x, date_format).weekday())
+    data_days["reviewDate"] = data_days["reviewDate"].apply(lambda x: x.weekday())
 
     data_day_list = []  # data for each weekday
     total_day_list = []  # total amount of reviews per weekday
@@ -64,7 +67,7 @@ def weekday_calc(data) :
 def month_calc(data):
     # change date to month
     data_month = data.copy()
-    data_month["reviewDate"] = data_month["reviewDate"].apply(lambda x: dt.strptime(x, date_format).month)
+    data_month["reviewDate"] = data_month["reviewDate"].apply(lambda x: x.month)
 
     data_month_list = []
     total_month_list = []
@@ -101,15 +104,31 @@ def month_calc(data):
         plt.close()
 
 
+def december_calc(data):
+    data_month = data.copy()
+    data_dec = data_month.loc[data_month["reviewDate"].month == 12]
 
+    category_dec_list = []
+    category_dec_total_list = []
+
+    counter = 0
+    for cat in categories:
+        category_dec_list.append(data_dec.loc[data_dec["category"] == cat])
+        category_dec_total_list.append(category_dec_list[counter]["num_of_reviews"].sum())
+        counter = counter + 1
+
+        # total reviews per month per category
+        for i in range(len(categories)):
+            plt.figure(figsize=(12, 6))
+            # plt.bar(months, [x / 1e6 for x in category_total_month_list[i][:]])
+            plt.title(f"total reviews per month {categories[i]}")
+            plt.ylabel("number of reviews (millions)")
+            plt.savefig(output_dir_cat_month + categories[i] + ".png")
+            plt.close()
 
 
 
 
 # weekday_calc(data)
 # month_calc(data)
-
-# test = "1996-05-20"
-# date = dt.strptime(test, date_format)
-# print(date.weekday()==0)
-# print(date)
+december_calc(data)
