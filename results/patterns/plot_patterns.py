@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import datetime as dt
+import numpy as np
 import matplotlib.pyplot as plt
 
 data = pd.read_json("result.json", lines=True)
@@ -106,25 +107,42 @@ def month_calc(data):
 
 def december_calc(data):
     data_month = data.copy()
-    data_dec = data_month.loc[data_month["reviewDate"].month == 12]
+    data_dec = data_month.loc[data_month["reviewDate"].dt.month == 12]
 
-    category_dec_list = []
-    category_dec_total_list = []
+    dec_list = []
+    dec_list_total = []
+    category_dec_list = np.zeros((len(categories),31)) # days horizontal, categories vertical
 
     counter = 0
-    for cat in categories:
-        category_dec_list.append(data_dec.loc[data_dec["category"] == cat])
-        category_dec_total_list.append(category_dec_list[counter]["num_of_reviews"].sum())
-        counter = counter + 1
+    for i in range(31):
+        # per day in december from all years
+        dec_list.append(data_dec.loc[data_dec["reviewDate"].dt.day == i + 1])
+        dec_list_total.append(dec_list[i]["num_of_reviews"].sum())
 
-        # total reviews per month per category
-        for i in range(len(categories)):
-            plt.figure(figsize=(12, 6))
-            # plt.bar(months, [x / 1e6 for x in category_total_month_list[i][:]])
-            plt.title(f"total reviews per month {categories[i]}")
-            plt.ylabel("number of reviews (millions)")
-            plt.savefig(output_dir_cat_month + categories[i] + ".png")
-            plt.close()
+        counter = 0
+        for cat in categories:
+            category_dec_list[counter,i] = dec_list[i].loc[dec_list[i]["category"] == cat]["num_of_reviews"].sum()
+            counter = counter + 1
+
+
+    # total reviews in december
+    plt.figure(figsize=(12,6))
+    plt.bar(list(range(1,32)), [y / 1e6 for y in dec_list_total])
+    plt.title(f"total reviews per day in december total")
+    plt.ylabel("number of reviews (millions")
+    plt.xlabel("day of the month")
+    plt.savefig(output_dir_total + "tot_rev_dec.png")
+
+
+    # total reviews per day per category
+    for i in range(len(categories)):
+        plt.figure(figsize=(12, 6))
+        plt.bar(list(range(1,32)), [y / 1e6 for y in category_dec_list[i][:]])
+        plt.title(f"total reviews per day in december {categories[i]}")
+        plt.ylabel("number of reviews (millions)")
+        plt.xlabel("day of the month")
+        plt.savefig(output_dir_dec + categories[i] + ".png")
+        plt.close()
 
 
 
@@ -132,3 +150,6 @@ def december_calc(data):
 # weekday_calc(data)
 # month_calc(data)
 december_calc(data)
+
+
+# print the most popular days and months for each category
