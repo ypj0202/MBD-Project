@@ -276,8 +276,8 @@ With the following conditions:
 - Top product on spike day has review count > 500 (Additional condition)
 
 Results:
-```json
-Total spikes:750
+```csv
+Total spikes: 750
 {'category': 'Books', 'count': 74}
 {'category': 'Kindle_Store', 'count': 80}
 {'category': 'Movies_and_TV', 'count': 84}
