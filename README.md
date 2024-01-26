@@ -269,6 +269,45 @@ Unique product in meta:71911
 Joined product count:71909
 Unique product in review:71982
 ```
+### Identified spikes
+With the following conditions:
+- Review count on spike day > 500
+- Between 2010 and 2018
+- Top product on spike day has review count > 500 (Additional condition)
+
+Results:
+```json
+Total spikes:750
+{'category': 'Books', 'count': 74}
+{'category': 'Kindle_Store', 'count': 80}
+{'category': 'Movies_and_TV', 'count': 84}
+{'category': 'CDs_and_Vinyl', 'count': 43}
+{'category': 'Digital_Music', 'count': 0}
+{'category': 'Video_Games', 'count': 31}
+{'category': 'Electronics', 'count': 29}
+{'category': 'Office_Products', 'count': 25}
+{'category': 'Tools_and_Home_Improvement', 'count': 30}
+{'category': 'Software', 'count': 5}
+{'category': 'Sports_and_Outdoors', 'count': 27}
+{'category': 'Clothing_Shoes_and_Jewelry', 'count': 31}
+{'category': 'Toys_and_Games', 'count': 31}
+{'category': 'Automotive', 'count': 29}
+{'category': 'Arts_Crafts_and_Sewing', 'count': 19}
+{'category': 'Cell_Phones_and_Accessories', 'count': 16}
+{'category': 'Industrial_and_Scientific', 'count': 22}
+{'category': 'Home_and_Kitchen', 'count': 35}
+{'category': 'Patio_Lawn_and_Garden', 'count': 35}
+{'category': 'Musical_Instruments', 'count': 16}
+{'category': 'Pet_Supplies', 'count': 19}
+{'category': 'Grocery_and_Gourmet_Food', 'count': 24}
+{'category': 'Appliances', 'count': 14}
+{'category': 'All_Beauty', 'count': 1}
+{'category': 'Magazine_Subscriptions', 'count': 0}
+{'category': 'AMAZON_FASHION', 'count': 15}
+{'category': 'Prime_Pantry', 'count': 7}
+{'category': 'Luxury_Beauty', 'count': 6}
+{'category': 'Gift_Cards', 'count': 2}
+```
 ## Dataset citation
 ```bibtex
 @inproceedings{ni-etal-2019-justifying,
