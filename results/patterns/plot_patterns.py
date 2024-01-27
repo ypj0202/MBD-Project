@@ -82,7 +82,7 @@ def weekday_calc(data) :
         most_popular[i][0] = i # index category
         most_popular[i][1] = category_total_day_list[i][:].index(max(category_total_day_list[i][:])) # index most popular day
 
-    most_popular[len(categories)][1] = np.bincount(most_popular[0:len(categories)-1][1]).argmax()
+    most_popular[len(categories)][1] = np.bincount(most_popular[:len(categories),1]).argmax()
 
 
 
@@ -123,7 +123,6 @@ def month_calc(data):
 
 
     # total reviews per month per category
-    popular_month_cat = np.zeros((len(categories)), dtype=int)
     for i in range(len(categories)):
         plt.figure(figsize=figsize)
         plt.bar(months, [x / 1e6 for x in category_total_month_list[i][:]])
@@ -136,7 +135,7 @@ def month_calc(data):
 
         most_popular[i][2] = category_total_month_list[i][:].index(max(category_total_month_list[i][:]))  # index most popular day
 
-    most_popular[len(categories)][2] = np.bincount(most_popular[0:len(categories) - 1][2]).argmax()
+    most_popular[len(categories)][2] = np.bincount(most_popular[:len(categories)-1,2]).argmax()
 
 
 def december_calc(data):
