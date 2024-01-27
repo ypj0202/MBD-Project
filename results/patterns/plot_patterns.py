@@ -11,6 +11,9 @@ output_dir_cat_month = "category_month_results/"
 output_dir_dec = "category_dec_results/"
 output_popular = output_dir_total + "popular.csv"
 
+plt.rcParams.update({'font.size': 20})
+figsize = (15, 6)
+
 categories = data["category"].unique() # 29
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -52,12 +55,14 @@ def weekday_calc(data) :
             category_total_day_list[counter][i] = category_day_list[counter][i]["num_of_reviews"].sum()
             counter = counter + 1
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=figsize)
 
     # total reviews per day
     plt.bar(days, [x / 1e6 for x in total_day_list])
     plt.title("total reviews per weekday")
     plt.ylabel("number of reviews (millions)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
     plt.savefig(output_dir_total + "tot_rev_day.png")
     plt.close()
     popular_day = days[total_day_list.index(max(total_day_list))]
@@ -66,10 +71,12 @@ def weekday_calc(data) :
 
     # total reviews per day per category
     for i in range(len(categories)):
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=figsize)
         plt.bar(days, [x / 1e6 for x in category_total_day_list[i][:]])
         plt.title(f"total reviews per weekday {categories[i]}")
         plt.ylabel("number of reviews (millions)")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
         plt.savefig(output_dir_cat_day + categories[i] + ".png")
         plt.close()
         most_popular[i][0] = i # index category
@@ -102,10 +109,12 @@ def month_calc(data):
             counter = counter + 1
 
     # total reviews per month
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=figsize)
     plt.bar(months, [x / 1e6 for x in total_month_list])
     plt.title("total reviews per month")
     plt.ylabel("number of reviews (millions)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
     plt.savefig(output_dir_total + "tot_rev_month.png")
     plt.close()
 
@@ -116,10 +125,12 @@ def month_calc(data):
     # total reviews per month per category
     popular_month_cat = np.zeros((len(categories)), dtype=int)
     for i in range(len(categories)):
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=figsize)
         plt.bar(months, [x / 1e6 for x in category_total_month_list[i][:]])
         plt.title(f"total reviews per month {categories[i]}")
         plt.ylabel("number of reviews (millions)")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
         plt.savefig(output_dir_cat_month + categories[i] + ".png")
         plt.close()
 
@@ -148,7 +159,7 @@ def december_calc(data):
 
 
     # total reviews in december
-    plt.figure(figsize=(12,6))
+    plt.figure(figsize=figsize)
     plt.bar(list(range(1,32)), [y / 1e6 for y in dec_list_total])
     plt.title(f"total reviews per day in december total")
     plt.ylabel("number of reviews (millions")
@@ -158,7 +169,7 @@ def december_calc(data):
 
     # total reviews per day per category
     for i in range(len(categories)):
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=figsize)
         plt.bar(list(range(1,32)), [y / 1e6 for y in category_dec_list[i][:]])
         plt.title(f"total reviews per day in december {categories[i]}")
         plt.ylabel("number of reviews (millions)")
