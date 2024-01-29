@@ -1,6 +1,8 @@
 import csv
 import pandas as pd
 from datetime import datetime as dt
+from scipy.stats import f_oneway
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,9 +16,10 @@ output_popular = output_dir_total + "popular.csv"
 plt.rcParams.update({'font.size': 20})
 figsize = (15, 6)
 
-categories = data["category"].unique() # 29
+categories = data["category"].unique()  # 29
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
+          "December"]
 date_format = '%Y-%m-%d'
 
 # num of reviews to int
@@ -24,18 +27,19 @@ data["num_of_reviews"] = data["num_of_reviews"].apply(int)
 data["reviewDate"] = data["reviewDate"].apply(lambda x: dt.strptime(x, date_format))
 data = data[(data["reviewDate"].dt.year >= 2010) & (data["reviewDate"].dt.year <= 2018)]
 
-most_popular = np.zeros((len(categories)+1,3), dtype=int)
-f = open(output_popular, 'w', newline='')
-writer = csv.writer(f)
+most_popular = np.zeros((len(categories) + 1, 3), dtype=int)
+
 
 # [row][col]
 # reviewDate, category, num_of_reviews, top_products_json -> asin, num_of_reviews, title, date (often empty)
 
 
-def weekday_calc(data) :
+def weekday_calc(data):
     # change date to day of week
     data_days = data.copy()
     data_days["reviewDate"] = data_days["reviewDate"].apply(lambda x: x.weekday())
+
+    calc_variance_weekday(data_days)
 
     data_day_list = []  # data for each weekday
     total_day_list = []  # total amount of reviews per weekday
@@ -68,7 +72,6 @@ def weekday_calc(data) :
     popular_day = days[total_day_list.index(max(total_day_list))]
     print(f"all time most popular day is {popular_day}")
 
-
     # total reviews per day per category
     for i in range(len(categories)):
         plt.figure(figsize=figsize)
@@ -79,17 +82,36 @@ def weekday_calc(data) :
         plt.tight_layout()
         plt.savefig(output_dir_cat_day + categories[i] + ".png")
         plt.close()
-        most_popular[i][0] = i # index category
-        most_popular[i][1] = category_total_day_list[i][:].index(max(category_total_day_list[i][:])) # index most popular day
+        most_popular[i][0] = i  # index category
+        most_popular[i][1] = category_total_day_list[i][:].index(
+            max(category_total_day_list[i][:]))  # index most popular day
 
-    most_popular[len(categories)][1] = np.bincount(most_popular[:len(categories),1]).argmax()
+    most_popular[len(categories)][1] = np.bincount(most_popular[:len(categories), 1]).argmax()
+    print("")
 
+
+def calc_variance_weekday(data):
+    f_statistic, p_value = f_oneway(data[data['reviewDate'] == 0]["num_of_reviews"],
+                                    data[data['reviewDate'] == 1]["num_of_reviews"],
+                                    data[data['reviewDate'] == 2]["num_of_reviews"],
+                                    data[data['reviewDate'] == 3]["num_of_reviews"],
+                                    data[data['reviewDate'] == 4]["num_of_reviews"],
+                                    data[data['reviewDate'] == 5]["num_of_reviews"],
+                                    data[data['reviewDate'] == 6]["num_of_reviews"])
+    print("weekdays F-statistic: ", f_statistic)
+    print("weekdays P-value: ", p_value)
+
+    posthoc = pairwise_tukeyhsd(data['num_of_reviews'], data['reviewDate'], alpha=0.05)
+    print("weekdays posthoc: \n", posthoc)
+    print("")
 
 
 def month_calc(data):
     # change date to month
     data_month = data.copy()
     data_month["reviewDate"] = data_month["reviewDate"].apply(lambda x: x.month)
+
+    calc_variance_month(data_month)
 
     data_month_list = []
     total_month_list = []
@@ -121,7 +143,6 @@ def month_calc(data):
     popular_month = months[total_month_list.index(max(total_month_list))]
     print(f"all time most popular month is {popular_month}")
 
-
     # total reviews per month per category
     for i in range(len(categories)):
         plt.figure(figsize=figsize)
@@ -133,9 +154,49 @@ def month_calc(data):
         plt.savefig(output_dir_cat_month + categories[i] + ".png")
         plt.close()
 
-        most_popular[i][2] = category_total_month_list[i][:].index(max(category_total_month_list[i][:]))  # index most popular day
+        most_popular[i][2] = category_total_month_list[i][:].index(
+            max(category_total_month_list[i][:]))  # index most popular day
 
-    most_popular[len(categories)][2] = np.bincount(most_popular[:len(categories)-1,2]).argmax()
+    most_popular[len(categories)][2] = np.bincount(most_popular[:len(categories) - 1, 2]).argmax()
+    print("")
+
+
+def calc_variance_month(data):
+    f_statistic, p_value = f_oneway(data[data['reviewDate'] == 1]["num_of_reviews"],
+                                    data[data['reviewDate'] == 2]["num_of_reviews"],
+                                    data[data['reviewDate'] == 3]["num_of_reviews"],
+                                    data[data['reviewDate'] == 4]["num_of_reviews"],
+                                    data[data['reviewDate'] == 5]["num_of_reviews"],
+                                    data[data['reviewDate'] == 6]["num_of_reviews"],
+                                    data[data['reviewDate'] == 7]["num_of_reviews"],
+                                    data[data['reviewDate'] == 8]["num_of_reviews"],
+                                    data[data['reviewDate'] == 9]["num_of_reviews"],
+                                    data[data['reviewDate'] == 10]["num_of_reviews"],
+                                    data[data['reviewDate'] == 11]["num_of_reviews"],
+                                    data[data['reviewDate'] == 12]["num_of_reviews"])
+    print("month F-statistic: ", f_statistic)
+    print("months P-value: ", p_value)
+
+    posthoc = pairwise_tukeyhsd(data['num_of_reviews'], data['reviewDate'], alpha=0.05)
+    print("months posthoc:\n", posthoc)
+    print("")
+
+
+def save_results():
+    print(most_popular)
+
+    f = open(output_popular, 'w', newline='')
+    writer = csv.writer(f)
+
+    writer.writerow(["category", "weekday", "month"])
+
+    for i in range(len(most_popular) - 1):
+        writer.writerow([categories[most_popular[i][0]], days[most_popular[i][1]], months[most_popular[i][2]]])
+
+    writer.writerow(["total", days[most_popular[len(categories)][1]], months[most_popular[len(categories)][2]]])
+
+    f.close()
+
 
 
 def december_calc(data):
@@ -144,7 +205,7 @@ def december_calc(data):
 
     dec_list = []
     dec_list_total = []
-    category_dec_list = np.zeros((len(categories),31)) # days horizontal, categories vertical
+    category_dec_list = np.zeros((len(categories), 31))  # days horizontal, categories vertical
 
     for i in range(31):
         # per day in december from all years
@@ -153,23 +214,21 @@ def december_calc(data):
 
         counter = 0
         for cat in categories:
-            category_dec_list[counter,i] = dec_list[i].loc[dec_list[i]["category"] == cat]["num_of_reviews"].sum()
+            category_dec_list[counter, i] = dec_list[i].loc[dec_list[i]["category"] == cat]["num_of_reviews"].sum()
             counter = counter + 1
-
 
     # total reviews in december
     plt.figure(figsize=figsize)
-    plt.bar(list(range(1,32)), [y / 1e6 for y in dec_list_total])
+    plt.bar(list(range(1, 32)), [y / 1e6 for y in dec_list_total])
     plt.title(f"total reviews per day in december total")
     plt.ylabel("number of reviews (millions")
     plt.xlabel("day of the month")
     plt.savefig(output_dir_total + "tot_rev_dec.png")
 
-
     # total reviews per day per category
     for i in range(len(categories)):
         plt.figure(figsize=figsize)
-        plt.bar(list(range(1,32)), [y / 1e6 for y in category_dec_list[i][:]])
+        plt.bar(list(range(1, 32)), [y / 1e6 for y in category_dec_list[i][:]])
         plt.title(f"total reviews per day in december {categories[i]}")
         plt.ylabel("number of reviews (millions)")
         plt.xlabel("day of the month")
@@ -177,21 +236,9 @@ def december_calc(data):
         plt.close()
 
 
-
-
 weekday_calc(data)
 month_calc(data)
 # december_calc(data)
 
-print(most_popular)
-writer.writerow(["category", "weekday", "month"])
 
-for i in range(len(most_popular)-1):
-    writer.writerow([categories[most_popular[i][0]], days[most_popular[i][1]], months[most_popular[i][2]]])
-
-writer.writerow(["total", days[most_popular[len(categories)][1]], months[most_popular[len(categories)][2]]])
-
-f.close()
-
-
-# print the most popular days and months for each category
+# save_results()
