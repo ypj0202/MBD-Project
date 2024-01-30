@@ -221,7 +221,7 @@ def december_calc(data):
     plt.figure(figsize=figsize)
     plt.bar(list(range(1, 32)), [y / 1e6 for y in dec_list_total])
     plt.title(f"total reviews per day in december total")
-    plt.ylabel("number of reviews (millions")
+    plt.ylabel("number of reviews (millions)")
     plt.xlabel("day of the month")
     plt.savefig(output_dir_total + "tot_rev_dec.png")
 
@@ -238,7 +238,7 @@ def december_calc(data):
 
 weekday_calc(data)
 month_calc(data)
-# december_calc(data)
+december_calc(data)
 
 
-# save_results()
+save_results()
