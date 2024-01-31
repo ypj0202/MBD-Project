@@ -1,8 +1,21 @@
 # Managing Big Data Project
+In this project, we attempted to extract useful information from the scrapped Amazon dataset. The dataset has an enormous amount of unparsed/empty data entries. One should consider carefully using certain columns. Data cleaning is required if missing/unparse data entry is presented. We have performed analysis from different perspectives, the results are stored in this repository. 
+<br/>
+### Basic information on the dataset
 **Dataset:** [Amazon_dataset 2018](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/) \
 **Path:** `/user/s2773430/data/Amazon_2018` \
-**Size on HDFS:** `45.1 G`  **Replicated size on HDFS:** `135.4 G`
+**Size on HDFS:** `45.1 G`  **Replicated size on HDFS:** `135.4 G` \
+**Time interval:** May 1996 ~ October 2018 \
+**Data entries:** 233.1 millions reviews + 15.5 millions product metadata
+### Results
+Plots can be found under `/results/` \
+The following plots are available for the extracted data:
+- Basic analysis
+- Patterns
+- Spikes
+- Drops
 ## Dataset schema
+Custom schema is required to load the data into the Spark Dataframe, the schemas used in the project are as follows.
 ### Review Dataset schema
 ```csv
 root
